@@ -33,15 +33,40 @@ setTimeout(() => {
             })
         })
 
+        describe('Vote against Add Validator before sending Add Validator Proposal', () => {
+            it('returns NoProposalForAddingValidator event', async () => {
+              let validatorToAdd = accountAddressList[3];
+              var votingAgainst = accountAddressList[2];
+              var estimatedGas = 0;
+              var encodedABI = this.contract.methods.voteAgainstAddingValidator(validatorToAdd).encodeABI();
+              var transactionObject = await this.utils.sendMethodTransaction(votingAgainst,this.simpleValidatorSetAddress, encodedABI ,privateKey[votingAgainst],this.web3,estimatedGas);
+              
+              var logs = await this.contract.getPastEvents('NoProposalForAddingValidator');
+              var returnValues = logs[0].returnValues;              
+              (returnValues['0'].toLowerCase()).should.be.equal(accountAddressList[3]);
+            })
+        })
+
+        describe('Vote against Remove Validator before sending Remove Validator Proposal', () => {
+            it('returns NoProposalForRemovingValidator event', async () => {
+              let validatorToRemove = accountAddressList[3];
+              var votingAgainst = accountAddressList[2];
+              var estimatedGas = 0;
+              var encodedABI = this.contract.methods.voteAgainstRemovingValidator(validatorToRemove).encodeABI();
+              var transactionObject = await this.utils.sendMethodTransaction(votingAgainst,this.simpleValidatorSetAddress, encodedABI ,privateKey[votingAgainst],this.web3,estimatedGas);
+              
+              var logs = await this.contract.getPastEvents('NoProposalForRemovingValidator');
+              var returnValues = logs[0].returnValues;              
+              (returnValues['0'].toLowerCase()).should.be.equal(accountAddressList[3]);
+            })
+        })
+
         describe('Add Validator for Admin', () => {
-
             let validatorToAdd = accountAddressList[3];
-
             it('returns validator is inactive before adding as validator', async () => {
                 var flag = await this.contract.methods.isActiveValidator(validatorToAdd).call();
                 expect(flag).to.be.false;
             })
-
             describe('Proposal to Add Validator', () => {
               it('returns proposal not created before add validator proposal', async () => {
                   var whatProposal = await this.contract.methods.checkProposal(validatorToAdd).call({from : ethAccountToUse});
@@ -58,6 +83,17 @@ setTimeout(() => {
                   var estimatedGas = 0;
                   var transactionObject = await this.utils.sendMethodTransaction(ethAccountToUse,this.simpleValidatorSetAddress,encodedABI,privateKey[ethAccountToUse],this.web3,estimatedGas);
                   expect(transactionObject.status).to.be.true;
+              })
+
+              it('returns AlreadyProposalForAddingValidator event', async () => {
+                  var encodedABI = this.contract.methods.proposalToAddValidator(validatorToAdd).encodeABI();
+                  var estimatedGas = 0;
+                  var transactionObject = await this.utils.sendMethodTransaction(ethAccountToUse,this.simpleValidatorSetAddress,encodedABI,privateKey[ethAccountToUse],this.web3,estimatedGas);
+                  var logs = await this.contract.getPastEvents('AlreadyProposalForAddingValidator');
+                  var returnValues = logs[0].returnValues;
+
+                  (returnValues['0'].toLowerCase()).should.be.equal(validatorToAdd);
+        
               })
 
               it('returns proposal as add after add validator proposal', async () => {
@@ -77,6 +113,7 @@ setTimeout(() => {
                   var estimatedGas = 0;
                   var encodedABI = this.contract.methods.voteAgainstAddingValidator(validatorToAdd).encodeABI();
                   var transactionObject = await this.utils.sendMethodTransaction(votingAgainst,this.simpleValidatorSetAddress, encodedABI ,privateKey[votingAgainst],this.web3,estimatedGas);
+                  
                   expect(transactionObject.status).to.be.true;
                 })
 
@@ -100,12 +137,6 @@ setTimeout(() => {
                     var transactionObject = await this.utils.sendMethodTransaction(votingFor,this.simpleValidatorSetAddress, encodedABI ,privateKey[votingFor],this.web3,estimatedGas);
 
                     expect(transactionObject.status).to.be.true;
-
-                    // var logs = await this.contract.getPastEvents('NoProposalForAddingAdmin',{fromBlock: 0, toBlock: 'latest'});
-                    // console.log('NoProposalForAddingAdmin event logs ' + JSON.stringify(logs))
-
-                    // var logs = await this.contract.getPastEvents('AddAdmin',{fromBlock: 0, toBlock: 'latest'});
-                    // console.log('AddAdmin event logs ' + JSON.stringify(logs))
                 })
 
                 it('returns proposal not created after voting for add validator proposal', async () => {
@@ -134,6 +165,27 @@ setTimeout(() => {
                   var count = await this.contract.methods.getActiveValidatorsCount().call({from : ethAccountToUse});
                   count.should.be.bignumber.equal(4);
               })
+
+              it('returns add validator event', async () => {
+                  var logs = await this.contract.getPastEvents('AddValidator');
+                  var returnValues = logs[0].returnValues;
+
+                  (returnValues['0'].toLowerCase()).should.be.equal(ethAccountToUse);
+                  (returnValues['1'].toLowerCase()).should.be.equal(accountAddressList[3]);
+              })
+            })
+        })
+
+        describe('Add Existing Validator Again', () => {
+            it('returns AlreadyActiveValidator event', async () => {
+                var validatorToAdd = accountAddressList[3];
+                var encodedABI = this.contract.methods.proposalToAddValidator(validatorToAdd).encodeABI();
+                var estimatedGas = 0;
+                var transactionObject = await this.utils.sendMethodTransaction(ethAccountToUse,this.simpleValidatorSetAddress,encodedABI,privateKey[ethAccountToUse],this.web3,estimatedGas);
+                var logs = await this.contract.getPastEvents('AlreadyActiveValidator');
+                var returnValues = logs[0].returnValues;
+
+                (returnValues['0'].toLowerCase()).should.be.equal(validatorToAdd);
             })
         })
 
@@ -155,12 +207,23 @@ setTimeout(() => {
                     expect(votes).to.deep.equal(['0', '0']);
                 })
 
-                it('returns proposalToRemoveValidator transaction status as true', async () => {
+                it('returns proposalToRemoveValidator event', async () => {
                     var encodedABI = this.contract.methods.proposalToRemoveValidator(validatorToRemove).encodeABI();
                     var estimatedGas = 0;
                     var transactionObject = await this.utils.sendMethodTransaction(ethAccountToUse, this.simpleValidatorSetAddress, encodedABI, privateKey[ethAccountToUse], this.web3, estimatedGas);
 
                     expect(transactionObject.status).to.be.true;
+                })
+
+                it('returns AlreadyProposalForRemovingValidator event', async () => {
+                    var encodedABI = this.contract.methods.proposalToRemoveValidator(validatorToRemove).encodeABI();
+                    var estimatedGas = 0;
+                    var transactionObject = await this.utils.sendMethodTransaction(ethAccountToUse,this.simpleValidatorSetAddress,encodedABI,privateKey[ethAccountToUse],this.web3,estimatedGas);
+                    var logs = await this.contract.getPastEvents('AlreadyProposalForRemovingValidator');
+                    var returnValues = logs[0].returnValues;
+  
+                    (returnValues['0'].toLowerCase()).should.be.equal(validatorToRemove);
+          
                 })
 
                 it('returns proposal as remove after remove validator proposal', async () => {
@@ -239,6 +302,27 @@ setTimeout(() => {
                     var count = await this.contract.methods.getActiveValidatorsCount().call({ from: ethAccountToUse });
                     count.should.be.bignumber.equal(3);
                 })
+
+                it('returns RemoveValidator event', async () => {
+                    var logs = await this.contract.getPastEvents('RemoveValidator');
+                    var returnValues = logs[0].returnValues;
+                    
+                    (returnValues['0'].toLowerCase()).should.be.equal(ethAccountToUse);
+                    (returnValues['1'].toLowerCase()).should.be.equal(accountAddressList[3]);
+                })
+            })
+        })
+
+        describe('Remove Same Validator Again', () => {
+            it('returns AlreadyInActiveValidator event', async () => {
+                var validatorToRemove = accountAddressList[3];
+                var encodedABI = this.contract.methods.proposalToRemoveValidator(validatorToRemove).encodeABI();
+                var estimatedGas = 0;
+                var transactionObject = await this.utils.sendMethodTransaction(ethAccountToUse,this.simpleValidatorSetAddress,encodedABI,privateKey[ethAccountToUse],this.web3,estimatedGas);
+                var logs = await this.contract.getPastEvents('AlreadyInActiveValidator');
+                var returnValues = logs[0].returnValues;
+
+                (returnValues['0'].toLowerCase()).should.be.equal(validatorToRemove);
             })
         })
 
@@ -259,10 +343,11 @@ setTimeout(() => {
             })
 
             describe('Add Validator Proposal', () => {
-                it('returns add validator proposal', async () => {
+                it('returns AddValidator proposal', async () => {
                     var estimatedGas = 0;
                     var encodedABI = this.contract.methods.proposalToAddValidator(otherValidator).encodeABI();
                     var transactionObject = await this.utils.sendMethodTransaction(ethAccountToUse,this.simpleValidatorSetAddress,encodedABI,privateKey[ethAccountToUse],this.web3,estimatedGas);
+
                     expect(transactionObject.status).to.be.true;
                 })
 

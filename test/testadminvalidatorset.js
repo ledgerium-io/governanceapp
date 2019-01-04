@@ -21,16 +21,46 @@ setTimeout(() => {
 
         describe('All Active Admins', () => {
             it('returns all active admins', async () => {
-                var encodedABI = await this.contract.methods.getAllAdmins().encodeABI();
-                var resultList = await this.utils.getData(ethAccountToUse, this.adminValidatorSetAddress, encodedABI, this.web3);
-                var adminList = this.utils.split(resultList);
-                for (var index = 0; index < adminList.length; index++) {
-                    console.log('Address ' + index + ' ' + adminList[index])
-                    var flag = await this.contract.methods.isActiveAdmin(adminList[index]).call({ from: ethAccountToUse });
-                    expect(flag).to.be.true;
-                }
+              
+              var encodedABI = await this.contract.methods.getAllAdmins().encodeABI();
+              var resultList = await this.utils.getData(ethAccountToUse, this.adminValidatorSetAddress, encodedABI, this.web3);
+              var adminList = this.utils.split(resultList);
+              for (var index = 0; index < adminList.length; index++) {
+                  console.log('Address ' + index + ' ' + adminList[index])
+                  var flag = await this.contract.methods.isActiveAdmin(adminList[index]).call({ from: ethAccountToUse });
+                  expect(flag).to.be.true;
+              }
+
             })
         })
+
+        describe('Vote against Add Admin before sending Add Admin Proposal', () => {
+          it('returns NoProposalForAddingAdmin event', async () => {
+            let adminToAdd = accountAddressList[3];
+            var votingAgainst = accountAddressList[2];
+            var estimatedGas = 0;
+            var encodedABI = this.contract.methods.voteAgainstAddingAdmin(adminToAdd).encodeABI();
+            var transactionObject = await this.utils.sendMethodTransaction(votingAgainst,this.adminValidatorSetAddress, encodedABI ,privateKey[votingAgainst],this.web3,estimatedGas);
+            
+            var logs = await this.contract.getPastEvents('NoProposalForAddingAdmin');
+            var returnValues = logs[0].returnValues;              
+            (returnValues['0'].toLowerCase()).should.be.equal(accountAddressList[3]);
+          })
+      })
+
+      describe('Vote against Remove Admin before sending Remove Admin Proposal', () => {
+          it('returns NoProposalForRemovingAdmin event', async () => {
+            let adminToRemove = accountAddressList[3];
+            var votingAgainst = accountAddressList[2];
+            var estimatedGas = 0;
+            var encodedABI = this.contract.methods.voteAgainstRemovingAdmin(adminToRemove).encodeABI();
+            var transactionObject = await this.utils.sendMethodTransaction(votingAgainst,this.adminValidatorSetAddress, encodedABI ,privateKey[votingAgainst],this.web3,estimatedGas);
+            
+            var logs = await this.contract.getPastEvents('NoProposalForRemovingAdmin');
+            var returnValues = logs[0].returnValues;              
+            (returnValues['0'].toLowerCase()).should.be.equal(accountAddressList[3]);
+          })
+      })
 
         describe('Add One Admin', () => {
             let adminToAdd = accountAddressList[3];
@@ -55,6 +85,17 @@ setTimeout(() => {
                   var estimatedGas = 0;
                   var transactionObject = await this.utils.sendMethodTransaction(ethAccountToUse,this.adminValidatorSetAddress,encodedABI,privateKey[ethAccountToUse],this.web3,estimatedGas);
                   expect(transactionObject.status).to.be.true;
+              })
+
+              it('returns AlreadyProposalForAddingAdmin event', async () => {
+                var encodedABI = this.contract.methods.proposalToAddAdmin(adminToAdd).encodeABI();
+                var estimatedGas = 0;
+                var transactionObject = await this.utils.sendMethodTransaction(ethAccountToUse,this.adminValidatorSetAddress,encodedABI,privateKey[ethAccountToUse],this.web3,estimatedGas);
+                var logs = await this.contract.getPastEvents('AlreadyProposalForAddingAdmin');
+                var returnValues = logs[0].returnValues;
+
+                (returnValues['0'].toLowerCase()).should.be.equal(adminToAdd);
+      
               })
 
               it('returns proposal as add after add admin proposal', async () => {
@@ -97,12 +138,6 @@ setTimeout(() => {
                     var transactionObject = await this.utils.sendMethodTransaction(votingFor,this.adminValidatorSetAddress, encodedABI ,privateKey[votingFor],this.web3,estimatedGas);
 
                     expect(transactionObject.status).to.be.true;
-
-                    // var logs = await this.contract.getPastEvents('NoProposalForAddingAdmin',{fromBlock: 0, toBlock: 'latest'});
-                    // console.log('NoProposalForAddingAdmin event logs ' + JSON.stringify(logs))
-
-                    // var logs = await this.contract.getPastEvents('AddAdmin',{fromBlock: 0, toBlock: 'latest'});
-                    // console.log('AddAdmin event logs ' + JSON.stringify(logs))
                 })
 
                 it('returns proposal not created after voting for add admin proposal', async () => {
@@ -131,8 +166,29 @@ setTimeout(() => {
                   var count = await this.contract.methods.getActiveAdminsCount().call({from : ethAccountToUse});
                   count.should.be.bignumber.equal(4);
               })
+
+              it('returns AddAdmin event', async () => {
+                var logs = await this.contract.getPastEvents('AddAdmin');
+                var returnValues = logs[0].returnValues;
+
+                (returnValues['0'].toLowerCase()).should.be.equal(ethAccountToUse);
+                (returnValues['1'].toLowerCase()).should.be.equal(accountAddressList[3]);
+              })
             })
         })
+
+        describe('Add Existing Admin Again', () => {
+          it('returns AlreadyActiveAdmin event', async () => {
+              var adminToAdd = accountAddressList[3];
+              var encodedABI = this.contract.methods.proposalToAddAdmin(adminToAdd).encodeABI();
+              var estimatedGas = 0;
+              var transactionObject = await this.utils.sendMethodTransaction(ethAccountToUse,this.adminValidatorSetAddress,encodedABI,privateKey[ethAccountToUse],this.web3,estimatedGas);
+              var logs = await this.contract.getPastEvents('AlreadyActiveAdmin');
+              var returnValues = logs[0].returnValues;
+
+              (returnValues['0'].toLowerCase()).should.be.equal(adminToAdd);
+          })
+      })
 
         describe('Remove Admin', () => {
             //const adminToRemove = accountAddressList[3];
@@ -157,10 +213,19 @@ setTimeout(() => {
                   var estimatedGas = 0;
                   var transactionObject = await this.utils.sendMethodTransaction(ethAccountToUse,this.adminValidatorSetAddress,encodedABI,privateKey[ethAccountToUse],this.web3,estimatedGas);
 
-                  // var logs = await this.contract.getPastEvents('AlreadyProposalForRemovingAdmin',{fromBlock: 0, toBlock: 'latest'});
-                  // console.log('AlreadyProposalForRemovingAdmin event logs ' + JSON.stringify(logs))
                   expect(transactionObject.status).to.be.true;
                 })
+
+                it('returns AlreadyProposalForRemovingAdmin event', async () => {
+                  var encodedABI = this.contract.methods.proposalToRemoveAdmin(adminToRemove).encodeABI();
+                  var estimatedGas = 0;
+                  var transactionObject = await this.utils.sendMethodTransaction(ethAccountToUse,this.adminValidatorSetAddress,encodedABI,privateKey[ethAccountToUse],this.web3,estimatedGas);
+                  var logs = await this.contract.getPastEvents('AlreadyProposalForRemovingAdmin');
+                  var returnValues = logs[0].returnValues;
+
+                  (returnValues['0'].toLowerCase()).should.be.equal(adminToRemove);
+        
+              })
 
                 it('returns proposal as remove after remove admin proposal', async () => {
                   var whatProposal = await this.contract.methods.checkProposal(adminToRemove).call({from : ethAccountToUse});
@@ -206,12 +271,6 @@ setTimeout(() => {
                       encodedABI = await this.contract.methods.voteForRemovingAdmin(adminToRemove).encodeABI();
                       transactionObject = await this.utils.sendMethodTransaction(votingFor,this.adminValidatorSetAddress, encodedABI ,privateKey[votingFor],this.web3,estimatedGas);
                       expect(transactionObject.status).to.be.true;
-
-                      // var logs = await this.contract.getPastEvents('NoProposalForRemovingAdmin',{fromBlock: 0, toBlock: 'latest'});
-                      // console.log('NoProposalForRemovingAdmin event logs ' + JSON.stringify(logs))
-
-                      // var logs = await this.contract.getPastEvents('RemoveAdmin',{fromBlock: 0, toBlock: 'latest'});
-                      // console.log('RemoveAdmin event logs ' + JSON.stringify(logs))
                     })
 
                     it('returns proposal not created after voting for remove admin proposal', async () => {
@@ -243,7 +302,28 @@ setTimeout(() => {
                 var count = await this.contract.methods.getActiveAdminsCount().call({from : ethAccountToUse});
                 count.should.be.bignumber.equal(3);
               })
+
+              it('returns RemoveAdmin event', async () => {
+                var logs = await this.contract.getPastEvents('RemoveAdmin');
+                var returnValues = logs[0].returnValues;
+                
+                (returnValues['0'].toLowerCase()).should.be.equal(ethAccountToUse);
+                (returnValues['1'].toLowerCase()).should.be.equal(accountAddressList[3]);
+              })
             })
+        })
+
+        describe('Remove Same Admin Again', () => {
+          it('returns AlreadyInActiveAdmin event', async () => {
+              var adminToRemove = accountAddressList[3];
+              var encodedABI = this.contract.methods.proposalToRemoveAdmin(adminToRemove).encodeABI();
+              var estimatedGas = 0;
+              var transactionObject = await this.utils.sendMethodTransaction(ethAccountToUse,this.adminValidatorSetAddress,encodedABI,privateKey[ethAccountToUse],this.web3,estimatedGas);
+              var logs = await this.contract.getPastEvents('AlreadyInActiveAdmin');
+              var returnValues = logs[0].returnValues;
+
+              (returnValues['0'].toLowerCase()).should.be.equal(adminToRemove);
+          })
         })
 
         describe('Clear Proposal', () => {
