@@ -4,6 +4,7 @@ const Web3 = require('web3');
 const Utils =  require('./web3util');
 const SimpleValidator = require('./simplevalidatorindex');
 const AdminValidator = require('./adminvalidatorindex');
+const IndexContract = require('./indexcontracthelper');
 const ethUtil = require('ethereumjs-util');
 
 var provider;
@@ -23,11 +24,11 @@ global.utils = utils;
 //var readkeyconfig = false;
 var contractsList = {};
 //Helper object for SimpleValidator Contract and AdminValdiator Contract! For now, globally declared
-var adminValidator,simpleValidator;
+var adminValidator,simpleValidator,indexContract;
 
 var privateKey = {};
 var accountAddressList = [];
-var adminValidatorSetAddress = "", simpleValidatorSetAddress = "", networkManagerAddress = "";
+var adminValidatorSetAddress = "", simpleValidatorSetAddress = "", networkManagerAddress = "", indexAddress = "";
 
 var main = async function () {
     const args = process.argv.slice(2);
@@ -74,6 +75,8 @@ var main = async function () {
                     global.adminValidator = adminValidator;
                     simpleValidator = new SimpleValidator();
                     global.simpleValidator = simpleValidator;
+                    indexContract = new IndexContract();
+                    global.indexContract = indexContract;
                 }
                 break;
             // case "subscribePastEvents":{
@@ -201,6 +204,56 @@ var main = async function () {
                 }
                 break;
             }
+            case "runstakeHolderTests":{
+                //Initiate App before any function gets executed
+                let list = temp[1].split(",");
+                for (let j=0; j<list.length ; j++) {
+                    if(list[j].indexOf("0x") > -1)
+                        continue;
+                    switch (list[j]) {
+                        case "getAllStakeHolders":
+                            var result = await indexContract.getAllStakeHolders();
+                            console.log("No of StakeHolders",result.length);
+                            break;
+                        case "addOneStakeHolder":
+                            //console.log("%%%%%%%%%%%%%%%%%%%%%% addOneStakeHolder list %%%%%%%%%%%%%%%%%%%%%%", list);
+                            var stakeHolderList = list.slice(1,list.length);
+                            console.log("stakeHolderList ", stakeHolderList);
+                            console.log("no of stakeHolder to add ", stakeHolderList.length);
+                            result = await indexContract.getAllActiveStakeHolders();
+                            for(var index = 0; index < stakeHolderList.length; index++) {
+                                var result = await indexContract.addOneStakeHolder(stakeHolderList[index]);
+                                result = await indexContract.getAllActiveStakeHolders();
+                                console.log("No of Active StakeHolders",result.length);
+                            }    
+                            break;
+                        case "removeOneStakeHolder":
+                            //console.log("%%%%%%%%%%%%%%%%%%%%%% removeOneStakeHolder list %%%%%%%%%%%%%%%%%%%%%%", list);
+                            var stakeHolderToRemove = list[++j];
+                            console.log("StakeHolderToRemove ", stakeHolderToRemove);
+                            var result = await indexContract.removeOneStakeHolder(stakeHolderToRemove);
+                            result = await indexContract.getAllActiveStakeHolders();
+                            console.log("No of Active StakeHolders",result.length);
+                            break;
+                        case "getAllActiveStakeHolders":
+                                var result = await indexContract.getAllActiveStakeHolders();
+                                console.log("No of Active StakeHolders",result.length);
+                                break;
+                        // case "runClearProposalsStakeHolderTestCases":
+                        //     var otherStakeHolderToCheck = list[++j];
+                        //     console.log("otherStakeHolderToCheck ", otherStakeHolderToCheck);
+                        //     var result = await indexContract.runClearProposalsStakeHolderTestCases(otherStakeHolderToCheck);
+                        //     console.log("result",result);
+                        //     result = await indexContract.getAllActiveStakeHolders();
+                        //     console.log("No of StakeHolders",result.length);
+                        //     break;
+                        default:
+                            console.log("Given runStakeHoldervalidator option not supported! Provide correct details");
+                            break;
+                    }
+                }
+                break;
+            }
             default:
                 //throw "command should be of form :\n node deploy.js host=<host> file=<file> contracts=<c1>,<c2> dir=<dir>";
                 break;
@@ -219,7 +272,7 @@ main();
 async function initiateApp(peerNodesFileName) {
 
     readContractsFromConfig();
-    if(simpleValidatorSetAddress == "" || adminValidatorSetAddress == "" || networkManagerAddress == "") {
+    if(simpleValidatorSetAddress == "" || adminValidatorSetAddress == "" || networkManagerAddress == "" || indexAddress == "") {
         if(accountAddressList.length < 3) {
             console.log("Ethereum accounts are not available! Can not proceed further!!");
             return;
@@ -231,15 +284,20 @@ async function initiateApp(peerNodesFileName) {
     console.log("adminValidatorSetAddress", adminValidatorSetAddress);
     console.log("simpleValidatorSetAddress", simpleValidatorSetAddress);
     console.log("networkManagerAddress", networkManagerAddress);
+    console.log("indexAddress", indexAddress);
 
     global.adminValidatorSetAddress = adminValidatorSetAddress;
     global.simpleValidatorSetAddress = simpleValidatorSetAddress;
     global.networkManagerAddress = networkManagerAddress;
+    global.indexAddress = indexAddress;
 
-    let tranHash = await adminValidator.setHelperParameters(adminValidatorSetAddress);
-    console.log("tranHash of initialisation", tranHash);
+    // let tranHash = await adminValidator.setHelperParameters(adminValidatorSetAddress);
+    // console.log("tranHash of initialisation", tranHash);
 
-    tranHash = await simpleValidator.setHelperParameters(simpleValidatorSetAddress,adminValidatorSetAddress);
+    // tranHash = await simpleValidator.setHelperParameters(simpleValidatorSetAddress,adminValidatorSetAddress);
+    // console.log("tranHash of initialisation", tranHash);
+
+    let tranHash = await indexContract.setHelperParameters(indexAddress);
     console.log("tranHash of initialisation", tranHash);
 
     var peerNodejson = JSON.parse(fs.readFileSync(peerNodesFileName, 'utf8'));
@@ -389,7 +447,9 @@ async function readContractsFromConfig(){
             if(contractsList["simpleValidatorSetAddress"] != undefined)    
                 simpleValidatorSetAddress= contractsList["simpleValidatorSetAddress"];
             if(contractsList["networkManagerAddress"] != undefined)    
-                networkManagerAddress= contractsList["networkManagerAddress"];    
+                networkManagerAddress= contractsList["networkManagerAddress"]; 
+            if(contractsList["indexAddress"] != undefined)    
+                indexAddress= contractsList["indexAddress"];        
         }
     }
     catch (error) {
