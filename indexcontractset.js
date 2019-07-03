@@ -42,7 +42,7 @@ class IndexContractSet {
             if (stakeHoldersList.length < 3)
                 return "";
             //Solidity does not take dynakic list of input parameters. So had give it seperate parameters. We have deided to give 4 validators as admin for Ledgerium Blockchain
-            var encodedABI = this.contract.methods.init(stakeHoldersList[0],stakeHoldersList[1],stakeHoldersList[2]).encodeABI();
+            var encodedABI = this.contract.methods.init(stakeHoldersList).encodeABI();
             // var estimatedGas = await this.utils.estimateGasTransaction(ethAccountToUse,this.contract._address, encodedABI,this.web3);
             // console.log("estimatedGas",estimatedGas);
             var estimatedGas = 0;

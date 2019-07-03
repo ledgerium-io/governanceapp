@@ -60,7 +60,7 @@ contract LedgeriumIndexContract is MultiSigSecured, Pausable {
     */
 	modifier isStakeHolder() {
 		// make sure only activeAdmin can operate
-        require(activeStakeHolders[msg.sender].isActive, "msg.sender is not active admin!");
+        require(activeStakeHolders[msg.sender].isActive);
         _;
     }
 	
@@ -84,34 +84,21 @@ contract LedgeriumIndexContract is MultiSigSecured, Pausable {
     * @dev Function to initiate contract with adding first admins. The pre-deployed contract will be the owner
     * @return A success flag
     */
-	function init(address address1, address address2, address address3) public ifNotInitalised {
-
-		address _owner1 = address1;
-		address _owner2 = address2;
-		address _owner3 = address3;
+	function init(address[] memory addresses) public {
+        require (addresses.length <= 5);
+        require ( !isInit, "Init already called" );
+        uint32 len = uint32(addresses.length);
+		for ( uint8 i = 0; i < len; i++ ){
+		    exists[addresses[i]] = true;
+		    activeStakeHolders[addresses[i]].isActive = true;
+		    activeStakeHolders[addresses[i]].status = Status.ACTIVE;
+		    stakeHolders.push(addresses[i]);
+		    emit InitStakeHolderAdded(addresses[i]);
+		}
 		
-		// make sure that there are minimum of 3 admins to vote for/against
-		exists[_owner1] = true;
-		activeStakeHolders[_owner1].isActive = true;
-		activeStakeHolders[_owner1].status = Status.ACTIVE;
-		stakeHolders.push(_owner1);
-		emit InitStakeHolderAdded(_owner1);
-
-		exists[_owner2] = true;
-		activeStakeHolders[_owner2].isActive = true;
-		activeStakeHolders[_owner2].status = Status.ACTIVE;
-		stakeHolders.push(_owner2);
-		emit InitStakeHolderAdded(_owner2);
-
-		exists[_owner3] = true;
-		activeStakeHolders[_owner3].isActive = true;
-		activeStakeHolders[_owner3].status = Status.ACTIVE;
-		stakeHolders.push(_owner3);
-		emit InitStakeHolderAdded(_owner3);
-
-		activeStakeHoldersCount = 3;
-		totalStakeHoldersCount = 3;
-		emit TotalNoOfStakeHolders(totalStakeHoldersCount);
+		activeStakeHoldersCount = len;
+		totalStakeHoldersCount  = len;
+		emit TotalNoOfStakeHolders(len);
 		isInit = true;  //Important flag!
 	}
 
@@ -133,10 +120,10 @@ contract LedgeriumIndexContract is MultiSigSecured, Pausable {
     * @return A success flag
     */
 	function createAddressUpdateProposal(string memory _contractName, address _newAddress, uint32 _minVotes) public isContractActive returns(bool res) {
-		require(exists[msg.sender], "msg.sender is not active stakeHolder");
-		require(getMethodStatus("updateAddress"), "updateAddress method is not active");
+		require(exists[msg.sender]);
+		require(getMethodStatus("updateAddress"));
 		string memory _temp = append("updateAddress-", _contractName);
-		require(!isBallotActive(_temp), "Ballot exists with given newAddress");
+		require(!isBallotActive(_temp));
 
 		if(_minVotes > 1 && _minVotes < activeStakeHoldersCount) {
 			emit RangeStakeHoldersNeeded(1, activeStakeHoldersCount);
@@ -165,14 +152,14 @@ contract LedgeriumIndexContract is MultiSigSecured, Pausable {
     * @return A success flag
     */
 	function voteContractAddress(string memory _contractName, bool _decision) public isContractActive returns(bool res) {
-		require(exists[msg.sender], "msg.sender is not active stakeHolder");
-		require(getMethodStatus("updateAddress"), "updateAddress method is not active");
+		require(exists[msg.sender]);
+		require(getMethodStatus("updateAddress"));
 		string memory _temp = append("updateAddress-", _contractName);
-		string memory message = append("Ballot should exist with ", _temp);
-		require(isBallotActive(_temp), message);
+		//string memory message = append("Ballot should exist with ", _temp);
+		require(isBallotActive(_temp));
 
-		string memory message1 = append("Contract update status should be true with ", _contractName);
-		require(contractMapping[_contractName].status,message1);
+		//string memory message1 = append("Contract update status should be true with ", _contractName);
+		require(contractMapping[_contractName].status);
 
 		if(_decision)
 			voteFor(_temp, msg.sender);
@@ -205,11 +192,11 @@ contract LedgeriumIndexContract is MultiSigSecured, Pausable {
 	* @return returns the list
     */
 	function createStakeHolderUpdate(address _stakeHolder, bool _decision) public isContractActive isInitalised returns(bool res) {
-		require(exists[msg.sender], "msg.sender is not active stakeHolder");
-		require(getMethodStatus("updateStakeHolder"), "updateStakeHolder method is not active");
+		require(exists[msg.sender]);
+		require(getMethodStatus("updateStakeHolder"));
 		string memory _temp = append("updateStakeHolder-", toString(_stakeHolder));
-		string memory message = append("Ballot exists with ", _temp);
-		require(!isBallotActive(_temp), message);
+		/*string memory message = append("Ballot exists with ", _temp);
+		require(!isBallotActive(_temp), message);*/
 
 		// assert(_minVotes > 1);
 		uint32 _minVotes =(activeStakeHoldersCount / 2) + 1;
@@ -223,7 +210,7 @@ contract LedgeriumIndexContract is MultiSigSecured, Pausable {
 		    _decision, 
 		    _minVotes, 
 		    msg.sender
-		), "createBallot function failed!");
+		));
 		if(_decision) 
 			emit AddStakeHolder(msg.sender, _stakeHolder);
 		else if(!_decision)
@@ -241,11 +228,11 @@ contract LedgeriumIndexContract is MultiSigSecured, Pausable {
     * @return A success flag
     */
 	function voteStakeHolder(address _newStakeHolder, bool _decision) public isContractActive isInitalised returns(bool res) {
-		require(exists[msg.sender], "msg.sender is not active stakeHolder");
-		require(getMethodStatus("updateStakeHolder"), "updateStakeHolder method is not active");
+		require(exists[msg.sender]);
+		require(getMethodStatus("updateStakeHolder"));
 		string memory _temp = append("updateStakeHolder-", toString(_newStakeHolder));
-		string memory message = append("Ballot should exist with ", _temp);
-		require(isBallotActive(_temp), message);
+	/*	string memory message = append("Ballot should exist with ", _temp);
+		require(isBallotActive(_temp), message);*/
 
 		if(_decision)
 			voteFor(_temp, msg.sender);
@@ -264,7 +251,7 @@ contract LedgeriumIndexContract is MultiSigSecured, Pausable {
     		activeStakeHolders[getProposedAddress(_temp)].isActive = true;
     		activeStakeHolders[getProposedAddress(_temp)].status = Status.ACTIVE;
 			activeStakeHoldersCount = activeStakeHoldersCount.add(1);
-			require(clearBallot(_temp), "clearBallot function failed!");
+			require(clearBallot(_temp));
 			return true;
 		}
 		if(votes[1] + minVotes > activeStakeHoldersCount) {
@@ -273,7 +260,7 @@ contract LedgeriumIndexContract is MultiSigSecured, Pausable {
 			activeStakeHoldersCount = activeStakeHoldersCount.sub(1);
 			//emit RemoveAdmin(votes[_address].proposer, _address);
 			exists[ getProposedAddress(_temp) ] = false;
-			require(clearBallot(_temp), "clearBallot function failed!");
+			require(clearBallot(_temp));
 		}
 		return true;
 	}
@@ -283,10 +270,10 @@ contract LedgeriumIndexContract is MultiSigSecured, Pausable {
 	* @return returns the list
     */
 	function createGlobalPauseProposal(uint32 _minVotes, bool _decision) public returns(bool) {
-		require(exists[msg.sender], "msg.sender is not active stakeHolder");
-		require(!isBallotActive("stop"), "Ballot exists with stop global pause of the contract");
+		require(exists[msg.sender]);
+		require(!isBallotActive("stop"));
 
-		require((_minVotes > 1),"Min votes should be more than one!");
+		require((_minVotes > 1));
 		createBallot(
 		    "stop", 
 		    0x0000000000000000000000000000000000000000, 
@@ -302,10 +289,9 @@ contract LedgeriumIndexContract is MultiSigSecured, Pausable {
 	* @return returns the list
     */
 	function votePauseProposal(bool _decision) public returns(bool) {
-		require(exists[msg.sender], "msg.sender is not active stakeHolder");
-		
+		require(exists[msg.sender]);
 		string memory STOP = "stop";
-		require(isBallotActive(STOP), "Ballot should exist with stop global pause of the contract");
+		require(isBallotActive(STOP));
 		if(_decision)
 			voteFor(STOP, msg.sender);
 		else
@@ -341,7 +327,7 @@ contract LedgeriumIndexContract is MultiSigSecured, Pausable {
 	* @return returns the status
     */
 	function pauseMethod(string memory _method) public isContractActive returns(bool) {
-		require(exists[msg.sender], "msg.sender is not active stakeHolder");
+		require(exists[msg.sender]);
 		return stopMethod(_method);
 	}
 
@@ -350,7 +336,7 @@ contract LedgeriumIndexContract is MultiSigSecured, Pausable {
 	* @return returns the status
     */
 	function unpauseMethod(string memory _method) public isContractActive returns(bool) {
-		require(exists[msg.sender], "msg.sender is not active stakeHolder");
+		require(exists[msg.sender]);
 		return startMethod(_method);
 	}
 
