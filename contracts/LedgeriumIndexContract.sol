@@ -416,7 +416,7 @@ contract LedgeriumIndexContract is MultiSigSecured, Pausable {
 	* @dev Function to get votes for a particular stakeholder, votesFor and votesAgainst
 	* @return uint32[2]
 	*/
-	function checkStakeholderVotes(string memory _stakeHolder) public view returns(uint32[2]) {
+	function checkStakeholderVotes(address _stakeHolder) public view returns(uint32[2]) {
 		require(exists[msg.sender]);
 		string memory _temp = append("updateStakeHolder-", toString(_newStakeHolder));
 		uint32[2] memory votes = getVotes(_temp);
