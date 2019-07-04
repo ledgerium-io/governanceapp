@@ -209,7 +209,7 @@ class IndexContract {
             console.log("submitted transactionhash ",transactionhash, "for proposal of adding ", stakeHolderToAdd, "by stakeHolder", ethAccountToPropose);
 
             /* Since ADD the stakeHolder proposal is raised, checkProposal should return "add"*/
-            var methodName = "updateStakeholder-" + stakeHolderToAdd;
+            var methodName = "updateStakeHolder-" + stakeHolderToAdd;
             var whatProposal = await this.indexContractSet.checkProposal(ethAccountToPropose, methodName);
             console.log(stakeHolderToAdd, "checked proposal for the stakeHolder ?", whatProposal);
             
