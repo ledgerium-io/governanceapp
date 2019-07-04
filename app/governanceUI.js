@@ -31,9 +31,9 @@ console.log("networkManagerAddress ", addresses.networkManagerAddress)
  * Constants
  */
 const refreshInterval           = 60000;
-const hostURL                   = "http://" + (process.argv[2] || "localhost") + ":" + (process.argv[3] || "8545");
+const hostURL                   = "http://" + (process.argv[2] || "127.0.0.1") + ":" + (process.argv[3] || "8545");
 const adminContractABI          = fs.readFileSync(__dirname + "/../build/contracts/AdminValidatorSet.abi.json", 'utf8');
-//const simpleContractABI         = fs.readFileSync(__dirname + "/../build/contracts/SimpleValidatorSet.abi.json", 'utf8');
+const indexContractABI          = fs.readFileSync(__dirname + "/../build/contracts/LedgeriumIndexContract.abi", 'utf8');
 const networkManagerContractABI = fs.readFileSync(__dirname + "/../build/contracts/NetworkManagerContract.abi.json", 'utf8');
 var activeNodes                 = [];
 const nodeMap                   = {};
@@ -397,28 +397,30 @@ app.post('/start_propose', (req, res)=>{
   }
   var methodData = '';
   const web3 = new Web3(new Web3.providers.IpcProvider(ipcPath, net));
-  const Admin = new web3.eth.Contract(JSON.parse(adminContractABI), addresses.adminValidatorSetAddress);
+  const Index = new web3.eth.Contract(JSON.parse(indexContractABI), addresses.indexAddress);
   console.log("Checking Votes");
-  Admin.methods.checkVotes(req.body.vote).call({ from : req.body.sender })
+  Index.methods.checkStakeholderVotes(req.body.vote).call({ from : req.body.sender })
   .then((result)=>{
     if(result[0] == '0' && result[1] == '0'){
-      if(req.body.proposal){
+      methodData = Index.methods.createStakeHolderUpdate(req.body.vote, req.body.proposal).encodeABI();;
+      /*if(req.body.proposal){
         console.log("create proposal");
-        methodData = Admin.methods.proposalToAddAdmin(req.body.vote).encodeABI();
+        methodData = Index.methods.proposalToAddAdmin(req.body.vote).encodeABI();
       }
       else{
         console.log("remove proposal");
-        methodData = Admin.methods.proposalToRemoveAdmin(req.body.vote).encodeABI();
-      }
+        methodData = Index.methods.proposalToRemoveAdmin(req.body.vote).encodeABI();
+      }*/
     }else{
-      if(req.body.proposal){
+      methodData = Index.methods.voteStakeHolder(req.body.vote, req.body.proposal).encodeABI();;
+      /*if(req.body.proposal){
         console.log("vote add");
-        methodData = Admin.methods.voteForAddingAdmin(req.body.vote).encodeABI();
+        methodData = Index.methods.voteForAddingAdmin(req.body.vote).encodeABI();
       }
       else{
         console.log("vote remove");
-        methodData = Admin.methods.voteForRemovingAdmin(req.body.vote).encodeABI();
-      }
+        methodData = Index.methods.voteForRemovingAdmin(req.body.vote).encodeABI();
+      }*/
     }
     web3.eth.getTransactionCount(req.body.sender,(err, nonceToUse)=>{
       if(err){
@@ -429,18 +431,19 @@ app.post('/start_propose', (req, res)=>{
         console.log("Got Transaction Count");
         const token = '0x'+ethUtil.keccak256(Math.random().toString()).toString('hex');
         tokenMap[token] = true;
-        res.status(200).send({
-          tx:{
+        const responseToBeSent = {
+          "tx":{
             nonce: nonceToUse,
             gasPrice: fixedGasPrice, //20Gwei
             gasLimit: fixedGasLimit,//'0x48A1C0',//web3.utils.toWei(20,'gwei'), //estimatedGas, // Todo, estimate gas
             from: req.body.sender,
-            to: addresses.adminValidatorSetAddress,
+            to: addresses.indexAddress,
             value: web3.utils.toHex(0),
             data: methodData
           },
-          token : token
-        });
+          "token" : token
+        };
+        res.status(200).send(responseToBeSent);
         console.log("Response Sent");
       }
     })
@@ -515,7 +518,7 @@ app.post('/istanbul_propose', function (req, res) {
 });
 
 readNetworkManagerContractNodeList();
-setInterval(syncContractListToNetworkNodeList, refreshInterval/2);
+//setInterval(syncContractListToNetworkNodeList, refreshInterval/2);
 setInterval(readNetworkManagerContractNodeList, refreshInterval);
 app.listen(listenPort, function () {
   console.log('Admin webserver started');

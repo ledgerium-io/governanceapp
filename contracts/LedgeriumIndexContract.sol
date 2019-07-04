@@ -231,8 +231,8 @@ contract LedgeriumIndexContract is MultiSigSecured, Pausable {
 		require(exists[msg.sender]);
 		require(getMethodStatus("updateStakeHolder"));
 		string memory _temp = append("updateStakeHolder-", toString(_newStakeHolder));
-	/*	string memory message = append("Ballot should exist with ", _temp);
-		require(isBallotActive(_temp), message);*/
+		/*	string memory message = append("Ballot should exist with ", _temp);
+			require(isBallotActive(_temp), message);*/
 
 		if(_decision)
 			voteFor(_temp, msg.sender);
@@ -410,5 +410,16 @@ contract LedgeriumIndexContract is MultiSigSecured, Pausable {
     */
 	function isVotingActive(string memory _method) public view returns(bool) {
 		return isBallotActive(_method);
+	}
+
+	/**
+	* @dev Function to get votes for a particular stakeholder, votesFor and votesAgainst
+	* @return uint32[2]
+	*/
+	function checkStakeholderVotes(string memory _stakeHolder) public view returns(uint32[2]) {
+		require(exists[msg.sender]);
+		string memory _temp = append("updateStakeHolder-", toString(_newStakeHolder));
+		uint32[2] memory votes = getVotes(_temp);
+		return votes;
 	}
 }
