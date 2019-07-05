@@ -1,0 +1,49 @@
+{
+  "nodes": [
+    {
+      "nodename": "validator-0",
+      "hostname": "validator-0",
+      "role": "full node",
+      "ipaddress": "125.254.27.14",
+      "port": 8545,
+      "publickey": "0x1a67eea756b9c074219dbbd1a68b7a6919412645",
+      "enodeUrl": "a9660d116471a594113ab8809447fc0f64053860a7069a4779294966bf8070bdf8f57003a3dff6eaa08723be376eb6e02e97c2bc8011c722010f01702d9ef0ed"
+    },
+    {
+      "nodename": "validator-1",
+      "hostname": "validator-1",
+      "role": "full node",
+      "ipaddress": "125.254.27.14",
+      "port": 8546,
+      "publickey": "0xcb680d316b281aebb68e73e813b7a53ec93c8f05",
+      "enodeUrl": "29eeecf7718aa2edfe76ba06d168f8743eda7e475388005ff745c3b34128e28c15ea4d47e7a2681437930e3ffcac51f9e195110a3aa1fd103a01ae55953f1a30"
+    },
+    {
+      "nodename": "validator-2",
+      "hostname": "validator-2",
+      "role": "full node",
+      "ipaddress": "125.254.27.14",
+      "port": 8547,
+      "publickey": "0xc1836760988668eea5275cd562755ec0b82cef92",
+      "enodeUrl": "f7bef11d1d72b19c8dd153c92064c0df1288a9d924141ec5dadaf4fce315ce8b85235df89feefde76619ad00bc20a3d9c5c37894da17f73069a40dcb771d8fea"
+    },
+    {
+      "nodename": "validator-3",
+      "hostname": "validator-3",
+      "role": "full node",
+      "ipaddress": "125.254.27.14",
+      "port": 8548,
+      "publickey": "0x86dc44a5ae35a09a62585f2e3de29f14dce2ff2c",
+      "enodeUrl": "12e693a93470953b44c8c5dc891215f3d1e84d3c6f41d83c3184d226717e7921a0deae9da5044865afe535db254be4359ac3240f040a36703dd9006b42cb3c1e"
+    },
+    {
+      "nodename": "validator-4",
+      "hostname": "validator-4",
+      "role": "full node",
+      "ipaddress": "125.254.27.14",
+      "port": 8549,
+      "publickey": "0x4c52e9a49541273f9a8c16b367eba30aeab10db0",
+      "enodeUrl": "a3ea11765bdf284cfd6f540f14d5db0ba762823cb44b82f00bf4b6e88e758833e764a901968f4d1e59bfcfcc12f5e155a016838bc6d644dd95f39dde5e373984"
+    }
+  ]
+}

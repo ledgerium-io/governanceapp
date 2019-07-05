@@ -248,7 +248,7 @@
       }
       if (!localWeb3.currentProvider.selectedAddress || !checkValidator(localWeb3.currentProvider.selectedAddress.toLowerCase())) {
         // show error and return 
-        showError("Please install and unlock <a href='https://github.com/ledgerium-io/metamask-extension'>Ledgerium Wallet</a> or make sure you are using an admin account");
+        showError("Make sure you are using an admin account");
         disableAllButtons();
         return;
         //throw new Error('Ledgerium Wallet Not fount');
