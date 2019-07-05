@@ -17,9 +17,9 @@ const EthereumTx  = require('ethereumjs-tx');
  * Parameters
  */
 const utils         = new Utils();
-const currentIp     = String(execSync('curl -s https://api.ipify.org'));
+const currentIp     = "125.254.27.14"; //String(execSync('curl -s https://api.ipify.org'));
 const listenPort    = "3003";
-const consortiumId  = "2018";
+const consortiumId  = "2019";
 if(addresses.networkManagerAddress == undefined)
 {
   console.log("networkManagerAddress was not defined")

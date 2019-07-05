@@ -28,7 +28,7 @@ var adminValidator,simpleValidator,indexContract;
 
 var privateKey = {};
 var accountAddressList = [];
-var adminValidatorSetAddress = "", simpleValidatorSetAddress = "", networkManagerAddress = "", indexAddress = "";
+var adminValidatorSetAddress = "", simpleValidatorSetAddress = "", networkManagerAddress = "", ledgeriumIndexContractAddress = "";
 
 var main = async function () {
     const args = process.argv.slice(2);
@@ -272,7 +272,7 @@ main();
 async function initiateApp(peerNodesFileName) {
 
     readContractsFromConfig();
-    if(simpleValidatorSetAddress == "" || adminValidatorSetAddress == "" || networkManagerAddress == "" || indexAddress == "") {
+    if(simpleValidatorSetAddress == "" || adminValidatorSetAddress == "" || networkManagerAddress == "" || ledgeriumIndexContractAddress == "") {
         if(accountAddressList.length < 3) {
             console.log("Ethereum accounts are not available! Can not proceed further!!");
             return;
@@ -284,12 +284,12 @@ async function initiateApp(peerNodesFileName) {
     console.log("adminValidatorSetAddress", adminValidatorSetAddress);
     console.log("simpleValidatorSetAddress", simpleValidatorSetAddress);
     console.log("networkManagerAddress", networkManagerAddress);
-    console.log("indexAddress", indexAddress);
+    console.log("ledgeriumIndexContractAddress", ledgeriumIndexContractAddress);
 
     global.adminValidatorSetAddress = adminValidatorSetAddress;
     global.simpleValidatorSetAddress = simpleValidatorSetAddress;
     global.networkManagerAddress = networkManagerAddress;
-    global.indexAddress = indexAddress;
+    global.ledgeriumIndexContractAddress = ledgeriumIndexContractAddress;
 
     // let tranHash = await adminValidator.setHelperParameters(adminValidatorSetAddress);
     // console.log("tranHash of initialisation", tranHash);
@@ -297,8 +297,8 @@ async function initiateApp(peerNodesFileName) {
     // tranHash = await simpleValidator.setHelperParameters(simpleValidatorSetAddress,adminValidatorSetAddress);
     // console.log("tranHash of initialisation", tranHash);
 
-    let tranHash = await indexContract.setHelperParameters(indexAddress);
-    console.log("tranHash of initialisation", tranHash);
+    let tranHash = await indexContract.setHelperParameters(ledgeriumIndexContractAddress);
+    console.log("tranHash of initialisation of indexContract", tranHash);
 
     var peerNodejson = JSON.parse(fs.readFileSync(peerNodesFileName, 'utf8'));
     if(peerNodejson == "") {    
@@ -448,8 +448,8 @@ async function readContractsFromConfig(){
                 simpleValidatorSetAddress= contractsList["simpleValidatorSetAddress"];
             if(contractsList["networkManagerAddress"] != undefined)    
                 networkManagerAddress= contractsList["networkManagerAddress"]; 
-            if(contractsList["indexAddress"] != undefined)    
-                indexAddress= contractsList["indexAddress"];        
+            if(contractsList["ledgeriumIndexContractAddress"] != undefined)    
+                ledgeriumIndexContractAddress= contractsList["ledgeriumIndexContractAddress"];        
         }
     }
     catch (error) {
