@@ -17,7 +17,7 @@ const EthereumTx  = require('ethereumjs-tx');
  * Parameters
  */
 const utils         = new Utils();
-const currentIp     = "125.254.27.14"; //String(execSync('curl -s https://api.ipify.org'));
+const currentIp     = String(execSync('curl -s https://api.ipify.org'));
 const listenPort    = "3003";
 const consortiumId  = "2019";
 if(addresses.networkManagerAddress == undefined)
@@ -25,7 +25,13 @@ if(addresses.networkManagerAddress == undefined)
   console.log("networkManagerAddress was not defined")
   addresses.networkManagerAddress = "0x0000000000000000000000000000000000002023"
 }
+if(addresses.ledgeriumIndexContractAddress == undefined)
+{
+  console.log("ledgeriumIndexContractAddress was not defined")
+  addresses.ledgeriumIndexContractAddress = "0x0000000000000000000000000000000000002024"
+}
 console.log("networkManagerAddress ", addresses.networkManagerAddress)
+console.log("ledgeriumIndexContractAddress ", addresses.ledgeriumIndexContractAddress)
 
 /*
  * Constants
@@ -397,12 +403,13 @@ app.post('/start_propose', (req, res)=>{
   }
   var methodData = '';
   const web3 = new Web3(new Web3.providers.IpcProvider(ipcPath, net));
-  const Index = new web3.eth.Contract(JSON.parse(indexContractABI), addresses.indexAddress);
+  const Index = new web3.eth.Contract(JSON.parse(indexContractABI), addresses.ledgeriumIndexContractAddress);
   console.log("Checking Votes");
+  console.log("req.body.proposal", req.body.proposal, "req.body.sender", req.body.sender,"req.body.vote", req.body.vote);
   Index.methods.checkStakeholderVotes(req.body.vote).call({ from : req.body.sender })
   .then((result)=>{
     if(result[0] == '0' && result[1] == '0'){
-      methodData = Index.methods.createStakeHolderUpdate(req.body.vote, req.body.proposal).encodeABI();;
+      methodData = Index.methods.createStakeHolderUpdate(req.body.vote, req.body.proposal).encodeABI();
       /*if(req.body.proposal){
         console.log("create proposal");
         methodData = Index.methods.proposalToAddAdmin(req.body.vote).encodeABI();
@@ -437,7 +444,7 @@ app.post('/start_propose', (req, res)=>{
             gasPrice: fixedGasPrice, //20Gwei
             gasLimit: fixedGasLimit,//'0x48A1C0',//web3.utils.toWei(20,'gwei'), //estimatedGas, // Todo, estimate gas
             from: req.body.sender,
-            to: addresses.indexAddress,
+            to: addresses.ledgeriumIndexContractAddress,
             value: web3.utils.toHex(0),
             data: methodData
           },
@@ -518,7 +525,7 @@ app.post('/istanbul_propose', function (req, res) {
 });
 
 readNetworkManagerContractNodeList();
-//setInterval(syncContractListToNetworkNodeList, refreshInterval/2);
+setInterval(syncContractListToNetworkNodeList, refreshInterval/2);
 setInterval(readNetworkManagerContractNodeList, refreshInterval);
 app.listen(listenPort, function () {
   console.log('Admin webserver started');
