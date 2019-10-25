@@ -129,7 +129,7 @@ var main = async function () {
                                 var result = await adminValidator.addOneAdmin(adminList[index]);
                                 result = await adminValidator.getAllActiveAdmins();
                                 console.log("No of admins",result.length);
-                            }    
+                            }
                             break;
                         case "removeOneAdmin":
                             var adminToRemove = list[++j];
@@ -185,7 +185,7 @@ var main = async function () {
                                 var result = await simpleValidator.addSimpleSetContractValidatorForAdmin(validatorList[index]);
                                 result = await simpleValidator.getListOfActiveValidators();
                                 console.log("No of validators",result.length);
-                            }  
+                            }
                             break;
                         case "removeSimpleSetContractValidatorForAdmin":
                             var validator = list[++j];
@@ -208,7 +208,7 @@ var main = async function () {
     }
     if(web3 != undefined)
         web3.currentProvider.disconnect();
-    
+
     if(provider)
         provider.engine.stop();
     return;
@@ -223,7 +223,7 @@ async function initiateApp(peerNodesFileName) {
         if(accountAddressList.length < 3) {
             console.log("Ethereum accounts are not available! Can not proceed further!!");
             return;
-        }    
+        }
         adminValidatorSetAddress = await adminValidator.deployNewAdminSetValidatorContractWithPrivateKey();
         simpleValidatorSetAddress = await simpleValidator.deployNewSimpleSetValidatorContractWithPrivateKey(adminValidatorSetAddress);
         writeContractsINConfig();
@@ -243,7 +243,7 @@ async function initiateApp(peerNodesFileName) {
     console.log("tranHash of initialisation", tranHash);
 
     var peerNodejson = JSON.parse(fs.readFileSync(peerNodesFileName, 'utf8'));
-    if(peerNodejson == "") {    
+    if(peerNodejson == "") {
         return;
     }
 
@@ -260,7 +260,7 @@ async function setupNetworkManagerContract() {
     // Todo: Read ABI from dynamic source.
     var abiFilename = __dirname + "/build/contracts/NetworkManagerContract.abi";
     var json = JSON.parse(fs.readFileSync(abiFilename, 'utf8'));
-    if(json == "") {    
+    if(json == "") {
         return;
     }
 
@@ -269,7 +269,7 @@ async function setupNetworkManagerContract() {
     var encodedABI = nmContract.methods.init().encodeABI();
     var transactionObject = await utils.sendMethodTransaction(ethAccountToUse,networkManagerAddress,encodedABI,privateKey[ethAccountToUse],web3,0);
     console.log("TransactionLog for Network Manager init() method -", transactionObject.transactionHash);
-    
+
     for(var index = 0; index < peerNodes.length; index++) {
         var noOfNodes = await nmContract.methods.getNodesCounter().call();
         let flag = false;
@@ -338,7 +338,7 @@ async function createAccountsAndManageKeysFromPrivateKeys(inputPrivateKeys) {
         catch (error) {
             console.log("Error in index.createAccountsAndManageKeysFromPrivateKeys(): " + error);
             return "";
-        }    
+        }
         accountAddressList.push(pubkey);
         privateKey[pubkey] = eachElement;
     }
@@ -366,7 +366,7 @@ async function readAccountsAndKeys(){
     else{
         console.log("privatekey.json file does not exist! The program may not function properly!");
         return false;
-    }    
+    }
 }
 
 async function writeAccountsAndKeys(){
@@ -386,16 +386,16 @@ async function readContractsFromConfig(){
             contractsList = JSON.parse(keyData);
             if(contractsList["adminValidatorSetAddress"] != undefined)
                 adminValidatorSetAddress = contractsList["adminValidatorSetAddress"];
-            if(contractsList["simpleValidatorSetAddress"] != undefined)    
+            if(contractsList["simpleValidatorSetAddress"] != undefined)
                 simpleValidatorSetAddress= contractsList["simpleValidatorSetAddress"];
-            if(contractsList["networkManagerAddress"] != undefined)    
-                networkManagerAddress= contractsList["networkManagerAddress"];    
+            if(contractsList["networkManagerAddress"] != undefined)
+                networkManagerAddress= contractsList["networkManagerAddress"];
         }
     }
     catch (error) {
         console.log("Error in readContractsFromConfig: " + error);
     }
-}    
+}
 
 async function writeContractsINConfig(){
     try{
@@ -403,7 +403,7 @@ async function writeContractsINConfig(){
         contractsList["adminValidatorSetAddress"] = adminValidatorSetAddress;
         contractsList["simpleValidatorSetAddress"] = simpleValidatorSetAddress;
         contractsList["networkManagerAddress"] = networkManagerAddress;
-    
+
         var data = JSON.stringify(contractsList,null, 2);
         fs.writeFileSync(contractFileName,data);
     }
@@ -411,5 +411,3 @@ async function writeContractsINConfig(){
         console.log("Error in writeContractsINConfig: " + error);
     }
 }
-
-
